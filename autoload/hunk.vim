@@ -17,21 +17,16 @@ function! hunk#loclist(winnr, commit) abort
     echom 'Not in git repository'
     return
   endif
-  let diff = s:DiffParser.parse(s:gitdiff(a:commit))
+  let diff = hunk#diff(a:commit, 0)
   let loclist = s:DiffUtils.loclist(diff)
-  let context = hunk#diff_context()
   for loc in loclist
     let loc.filename = s:cdup() . loc.filename
-    if loc.lnum > context
-      let loc.lnum += context
-    endif
-    echo loc.lnum
   endfor
   call setloclist(a:winnr, loclist, 'r')
 endfunction
 
-function! hunk#diff(commit) abort
-  return s:DiffParser.parse(s:gitdiff(a:commit))
+function! hunk#diff(commit, unified) abort
+  return s:DiffParser.parse(s:gitdiff(a:commit, a:unified))
 endfunction
 
 function! hunk#is_in_git_repo() abort
@@ -56,13 +51,14 @@ function! s:cdup() abort
   return s:String.chomp(result.output)
 endfunction
 
-function! s:gitdiff(commit) abort
+function! s:gitdiff(commit, unified) abort
   let result = s:Process.execute([
   \   'git',
   \   'diff',
   \   '--no-color',
   \   '--no-ext-diff',
   \   '--no-prefix',
+  \   '-U' . a:unified,
   \ ] + (a:commit is# '' ? [] : [a:commit]))
   return result.output
 endfunction

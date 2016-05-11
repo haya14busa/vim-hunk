@@ -21,7 +21,7 @@ function! s:loclist(diff) abort
       let list = {
       \   'filename': filename,
       \   'lnum': hunk.new_l,
-      \   'text': hunk.heading,
+      \   'text': get(split(hunk.context, "\n"), 0, hunk.heading),
       \ }
       let loclist += [list]
     endfor

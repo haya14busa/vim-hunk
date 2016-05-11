@@ -18,34 +18,63 @@ let s:source = {
 
 function! s:source.gather_candidates(args, context) abort
   let commit = get(a:args, 0, '')
-  let diff = hunk#diff(commit)
+  let unified = get(a:args, 1, hunk#diff_context())
+
+  let diff = hunk#diff(commit, unified)
   let root = hunk#root()
-  let diff_context = hunk#diff_context()
   let candidates = []
+  let max_word_length = 0
+
   for diff_for_file in diff
     let path = root . '/' . diff_for_file.dest
     for hunk in diff_for_file.hunks
       let lnum = hunk.new_l
-      if lnum > diff_context
-        let lnum += diff_context
+      let short_context_index = 0
+      let changed_lines = hunk.new_s
+      if lnum > unified
+        let lnum += unified
+        let short_context_index += unified
+        let changed_lines -= unified
       endif
+      let changed_lines = max([1, changed_lines - unified])
+
+      let word = diff_for_file.dest . '|' . lnum . ',' . changed_lines . '|'
+      let max_word_length = max([max_word_length, len(word)])
       call add(candidates, {
-      \   'word': diff_for_file.dest . '|' . lnum . '| ' . hunk.heading,
+      \   'word': word,
       \   'action__path': path,
       \   'action__line' : lnum,
       \   'action__context' : hunk.context,
+      \   'short_context_index': short_context_index,
       \ })
     endfor
   endfor
+
+  for c in candidates
+    let space = repeat(' ', max_word_length - len(c.word) + 1)
+    let short_context = get(split(c.action__context, "\n"), c.short_context_index, '')
+    let c.word = c.word . space . short_context
+    call remove(c, 'short_context_index')
+  endfor
+
   return candidates
 endfunction
 
 function! s:source.hooks.on_syntax(args, context) abort
+  " From quickfix
   syn match uniteSource__HunkFileName "^[^|]*" nextgroup=uniteSource__HunkSeparator containedin=uniteSource__Hunk
   syn match uniteSource__HunkSeparator "|" nextgroup=uniteSource__HunkLineNr contained containedin=uniteSource__Hunk
   syn match uniteSource__HunkLineNr "[^|]*" contained contains=uniteSource__HunkError containedin=uniteSource__Hunk
   hi def link uniteSource__HunkFileName Directory
   hi def link uniteSource__HunkLineNr LineNr
+
+  " From diff
+  syn match uniteSource__diffRemoved "|\s\+\zs-.*"
+  syn match uniteSource__diffAdded "|\s\+\zs+.*"
+  syn match uniteSource__diffChanged "|\s\+\zs! .*"
+  hi def link uniteSource__diffRemoved Special
+  hi def link uniteSource__diffChanged PreProc
+  hi def link uniteSource__diffAdded Identifier
 endfunction
 
 let s:source.action_table.preview = {
