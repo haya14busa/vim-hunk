@@ -37,9 +37,7 @@ endfunction
 " https://git-scm.com/docs/git-diff
 function! s:_hunk_from_file(diff_file) abort
   let lines = split(a:diff_file, "\n")
-  let [diff_line, index_line, src_path_line, dest_path_line; rest] = lines
-  " diff_line:      diff --git a/rc/dein.vim b/rc/dein.vim
-  " index_line:     index feb07e4..5902d0d 100644
+  let [src_path_line, dest_path_line; rest] = s:_skip_to_src_line(lines)
   " src_path_line:  --- a/rc/dein.vim
   " dest_path_line: +++ b/rc/dein.vim
   let src = matchstr(src_path_line, '^--- \zs.*$')
@@ -51,6 +49,17 @@ function! s:_hunk_from_file(diff_file) abort
   \   'dest': dest,
   \   'hunks': hunks,
   \ }
+endfunction
+
+function! s:_skip_to_src_line(diff_lines) abort
+  let n = 0
+  for line in a:diff_lines
+    if line =~# '^--- \zs.*$'
+      break
+    endif
+    let n += 1
+  endfor
+  return a:diff_lines[n : ]
 endfunction
 
 " @param {string} raw_hunk

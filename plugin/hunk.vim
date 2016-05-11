@@ -14,7 +14,7 @@ let g:loaded_hunk = 1
 let s:save_cpo = &cpo
 set cpo&vim
 
-command! HunkLoclist call hunk#loclist(winnr())
+command! -nargs=? -complete=customlist,hunk#loclist_complete HunkLoclist call hunk#loclist(winnr(), <q-args>)
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

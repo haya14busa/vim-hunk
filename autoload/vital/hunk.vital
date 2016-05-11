@@ -3,3 +3,5 @@ hunk
 
 Diff.Parser
 Diff.Utils
+System.Process
+Data.String
