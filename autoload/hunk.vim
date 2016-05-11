@@ -17,8 +17,9 @@ function! hunk#loclist(winnr, commit) abort
     echom 'Not in git repository'
     return
   endif
-  let diff = hunk#diff(a:commit, 0)
-  let loclist = s:DiffUtils.loclist(diff)
+  let unified = hunk#diff_context()
+  let diff = hunk#diff(a:commit, unified)
+  let loclist = s:DiffUtils.loclist(diff, unified)
   for loc in loclist
     let loc.filename = s:cdup() . loc.filename
   endfor
