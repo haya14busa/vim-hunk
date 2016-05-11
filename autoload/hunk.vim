@@ -13,21 +13,41 @@ let s:Process = vital#hunk#import('System.Process')
 let s:String = vital#hunk#import('Data.String')
 
 function! hunk#loclist(winnr, commit) abort
-  if !s:is_in_git_repo()
+  if !hunk#is_in_git_repo()
     echom 'Not in git repository'
     return
   endif
   let diff = s:DiffParser.parse(s:gitdiff(a:commit))
   let loclist = s:DiffUtils.loclist(diff)
+  let context = hunk#diff_context()
   for loc in loclist
     let loc.filename = s:cdup() . loc.filename
+    if loc.lnum > context
+      let loc.lnum += context
+    endif
+    echo loc.lnum
   endfor
   call setloclist(a:winnr, loclist, 'r')
 endfunction
 
-function! s:is_in_git_repo() abort
+function! hunk#diff(commit) abort
+  return s:DiffParser.parse(s:gitdiff(a:commit))
+endfunction
+
+function! hunk#is_in_git_repo() abort
   let result = s:Process.execute(['git', 'rev-parse', '--is-inside-work-tree'])
   return s:String.chomp(result.output) is# 'true'
+endfunction
+
+function! hunk#root() abort
+  let result = s:Process.execute(['git', 'rev-parse', '--show-toplevel'])
+  return s:String.chomp(result.output)
+endfunction
+
+function! hunk#diff_context() abort
+  let result = s:Process.execute(['git', 'config', 'diff.context'])
+  let context = s:String.chomp(result.output)
+  return context is# '' ? 3 : str2nr(context)
 endfunction
 
 " show path of top-level directory relative to current directory
@@ -43,7 +63,6 @@ function! s:gitdiff(commit) abort
   \   '--no-color',
   \   '--no-ext-diff',
   \   '--no-prefix',
-  \   '-U0',
   \ ] + (a:commit is# '' ? [] : [a:commit]))
   return result.output
 endfunction
