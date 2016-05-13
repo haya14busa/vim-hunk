@@ -13,7 +13,7 @@ endfunction
 
 let s:source = {
 \   'name': 'hunk/line',
-\   'description' : 'jump to line in hunk',
+\   'description' : 'search line in hunk',
 \   'default_kind' : 'hunk/line',
 \   'syntax' : 'uniteSource__Hunk',
 \   'hooks': {},
@@ -26,7 +26,7 @@ function! s:source.gather_candidates(args, context) abort
   let diff = hunk#diff(commit, unified)
   let root = hunk#root()
   let candidates = []
-  let max_word_length = 0
+  let max_abbr_length = 0
 
   for diff_for_file in diff
     let path = root . '/' . diff_for_file.dest
@@ -34,14 +34,14 @@ function! s:source.gather_candidates(args, context) abort
       let lnum = hunk.new_l
 
       for line in split(hunk.context, "\n")
-        let word = diff_for_file.dest . '|' . lnum . '|'
-        let max_word_length = max([max_word_length, len(word)])
+        let abbr = diff_for_file.dest . '|' . lnum . '|'
+        let max_abbr_length = max([max_abbr_length, len(abbr)])
         call add(candidates, {
-        \   'word': word,
+        \   'word': line,
+        \   'abbr': abbr,
         \   'action__path': path,
         \   'action__line' : lnum,
         \   'action__context' : hunk.context,
-        \   'line' : line,
         \ })
 
         if line[0] is# '+'
@@ -52,9 +52,8 @@ function! s:source.gather_candidates(args, context) abort
   endfor
 
   for c in candidates
-    let space = repeat(' ', max_word_length - len(c.word) + 1)
-    let c.word .= space . c.line
-    call remove(c, 'line')
+    let space = repeat(' ', max_abbr_length - len(c.abbr) + 1)
+    let c.abbr .= space . c.word
   endfor
 
   return candidates
