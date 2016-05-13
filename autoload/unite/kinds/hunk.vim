@@ -7,8 +7,10 @@ scriptencoding utf-8
 let s:save_cpo = &cpo
 set cpo&vim
 
+let s:List = vital#hunk#import('Data.List')
+
 function! unite#kinds#hunk#define()
-  return s:kinds()
+  return s:List.flatten(s:kinds())
 endfunction
 
 let s:basedir = fnamemodify(expand('<sfile>'), ':r')

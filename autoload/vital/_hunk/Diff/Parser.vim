@@ -74,10 +74,10 @@ endfunction
 function! s:_parse_hunk(raw_hunk) abort
   let [info_line; context_lines] = split(a:raw_hunk, "\n")
   let pattern = '^@@ -\(\d\+\)\%(,\(\d\+\)\)\? +\(\d\+\)\%(,\(\d\+\)\)\? @@\%( \(.*\)\)\?$'
-  let [_, orig_l, orig_s, new_l, new_s, heading; __] = matchlist(info_line, pattern)
+  let [_, old_l, old_s, new_l, new_s, heading; __] = matchlist(info_line, pattern)
   return {
-  \   'orig_l': s:_str2nr(orig_l),
-  \   'orig_s': s:_str2nr(orig_s),
+  \   'old_l': s:_str2nr(old_l),
+  \   'old_s': s:_str2nr(old_s),
   \   'new_l': s:_str2nr(new_l),
   \   'new_s': s:_str2nr(new_s),
   \   'heading': heading,

@@ -7,6 +7,8 @@ scriptencoding utf-8
 let s:save_cpo = &cpo
 set cpo&vim
 
+let s:List = vital#hunk#import('Data.List')
+
 function! unite#sources#hunk#define() abort
   return [s:source] + s:sources()
 endfunction
@@ -20,7 +22,7 @@ let s:basedir = fnamemodify(expand('<sfile>'), ':r')
 function! s:sources() abort
   let source_pathes = split(globpath(s:basedir, '*.vim', 1), "\n")
   let source_names = map(source_pathes, "fnamemodify(v:val, ':t:r')")
-  return map(source_names, 'unite#sources#hunk#{v:val}#define()')
+  return s:List.flatten(map(source_names, 'unite#sources#hunk#{v:val}#define()'))
 endfunction
 
 let s:source = {

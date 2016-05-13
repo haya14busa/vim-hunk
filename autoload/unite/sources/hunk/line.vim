@@ -8,7 +8,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 function! unite#sources#hunk#line#define() abort
-  return s:source
+  return [s:source, s:source_added, s:source_deleted]
 endfunction
 
 let s:source = {
@@ -18,6 +18,16 @@ let s:source = {
 \   'syntax' : 'uniteSource__Hunk',
 \   'hooks': {},
 \   'sorters' : 'sorter_nothing',
+\ }
+
+let s:source_added = {
+\   'name': 'hunk/line_added',
+\   'description' : 'search added line in hunk',
+\ }
+
+let s:source_deleted = {
+\   'name': 'hunk/line_deleted',
+\   'description' : 'search deleted line in hunk',
 \ }
 
 function! s:source.gather_candidates(args, context) abort
@@ -63,9 +73,22 @@ function! s:source.hooks.on_syntax(args, context) abort
   call unite#sources#hunk#syntax()
 endfunction
 
+call extend(s:source_added, s:source, 'keep')
+call extend(s:source_deleted, s:source, 'keep')
+
+function! s:source_added.gather_candidates(...) abort
+  let candidates = call(s:source.gather_candidates, a:000, self)
+  return filter(candidates, "v:val.word[0] is# '+'")
+endfunction
+
+function! s:source_deleted.gather_candidates(...) abort
+  let candidates = call(s:source.gather_candidates, a:000, self)
+  return filter(candidates, "v:val.word[0] is# '-'")
+endfunction
+
 if expand('%:p') ==# expand('<sfile>:p')
   " echo s:source.gather_candidates([], {})
-  call unite#define_source(s:source)
+  call map(unite#sources#hunk#line#define(), 'unite#define_source(v:val)')
 endif
 
 let &cpo = s:save_cpo
