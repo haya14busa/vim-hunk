@@ -12,7 +12,15 @@ let s:DiffUtils = vital#hunk#import('Diff.Utils')
 let s:Process = vital#hunk#import('System.Process')
 let s:String = vital#hunk#import('Data.String')
 
+function! hunk#qflist(commit) abort
+  call setqflist(s:loclist(a:commit), 'r')
+endfunction
+
 function! hunk#loclist(winnr, commit) abort
+  call setloclist(a:winnr, hunk#qflist(a:commit), 'r')
+endfunction
+
+function! s:loclist(commit) abort
   if !hunk#is_in_git_repo()
     echom 'Not in git repository'
     return
@@ -23,7 +31,7 @@ function! hunk#loclist(winnr, commit) abort
   for loc in loclist
     let loc.filename = s:cdup() . loc.filename
   endfor
-  call setloclist(a:winnr, loclist, 'r')
+  return loclist
 endfunction
 
 function! hunk#diff(commit, unified) abort
